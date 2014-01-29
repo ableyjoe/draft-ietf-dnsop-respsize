@@ -100,64 +100,87 @@
 
     <abstract>
       <t>With a mandated default minimum maximum UDP message size
-	of 512 octets, the DNS protocol presents some special
-	problems for zones wishing to expose a moderate or high
-	number of authority servers (NS RRs).  This document explains
-	the operational issues caused by, or related to this response
-	size limit, and suggests ways to optimize the use of this
-	limited space.  Guidance is offered to DNS server implementors
-	and to DNS zone operators.</t>
+        of 512 octets, the DNS protocol presents some special
+        problems for zones wishing to expose a moderate or high
+        number of authority servers (NS RRs).  This document explains
+        the operational issues caused by, or related to this response
+        size limit, and suggests ways to optimize the use of this
+        limited space.  Guidance is offered to DNS server implementors
+        and to DNS zone operators.</t>
+
+      <!-- jabley
+        -- Expand "RRs" to "Resource Records". Probably don't expand
+        -- UDP or DNS, since those are more obvious.
+        -->
+
     </abstract>
   </front>
 
   <middle>
     <section title="Introduction and Overview">
       <t>The original DNS standard limited the UDP message size to
-	512 octets (see Section 4.2.1 of <xref target="RFC1035"/>).
-	Even though this limitation was due to the required minimum
-	IP reassembly limit for IPv4, it became a hard DNS protocol
-	limit and is not implicitly relaxed by changes in a network
-	layer protocol, for example to IPv6.</t>
+        512 octets (see Section 4.2.1 of <xref target="RFC1035"/>).
+        Even though this limitation was due to the required minimum
+        IP reassembly limit for IPv4, it became a hard DNS protocol
+        limit and is not implicitly relaxed by changes in a network
+        layer protocol, for example to IPv6.</t>
 
       <t>The EDNS (Extension Mechanisms for DNS) protocol extension
-	starting with version 0 permits larger responses by mutual
-	agreement of the requester and responder (see Section 4.3
-	and Section 6.2 of <xref target="RFC6891"/>), and it is
-	recommended to support EDNS.  The 512 octets UDP message
-	size limit will remain in practical effect until virtually
-	all DNS servers and resolvers support EDNS.</t>
+        starting with version 0 permits larger responses by mutual
+        agreement of the requester and responder (see Section 4.3
+        and Section 6.2 of <xref target="RFC6891"/>), and it is
+        recommended to support EDNS.  The 512 octets UDP message
+        size limit will remain in practical effect until virtually
+        all DNS servers and resolvers support EDNS.</t>
+
+      <!-- jabley
+        -- Need to check those section numbers, which were originally
+        -- references to RFC2671bis, subsequently published as RFC6891
+        -->
 
       <t>Since DNS responses include a copy of the request, the
-	space available for response data is somewhat less than the
-	full 512 octets.  Negative responses are quite small, but
-	for positive and referral responses, every octet must be
-	carefully and sparingly allocated.  While the response size
-	of positive responses is also a concern in <xref
-	target="RFC3226"/>, this document specifically addresses
-	referral response size.</t>
+        space available for response data is somewhat less than the
+        full 512 octets.  Negative responses are quite small, but
+        for positive and referral responses, every octet must be
+        carefully and sparingly allocated.  While the response size
+        of positive responses is also a concern in <xref
+        target="RFC3226"/>, this document specifically addresses
+        referral response size.</t>
 
       <t>While more than twelve years passed since the publication
-	of the original EDNS0 document <xref target="RFC2671"/>,
-	approximately 65% of the clients support it as observed at
-	a root name server and this fraction has not changed in
-	recent few years.  The long tail of EDNS deployment may
-	eventually be measured in decades.</t>
+        of the original EDNS0 document <xref target="RFC2671"/>,
+        approximately 65% of the clients support it as observed at
+        a root name server and this fraction has not changed in
+        recent few years.  The long tail of EDNS deployment may
+        eventually be measured in decades.</t>
+
+      <!-- jabley
+        -- "twelve" is probably old. Need a citation for the 65%, or
+        -- get some friendly rootop to run a quick experiment and
+        -- include a brief description of methodology and results in
+        -- an appendix.
+        -->
 
       <t>Even if EDNS deployment reached 100% of all DNS initiators
-	and responders there will still be cases when path MTU
-	limitations or IP fragmentation/reassembly problems in
-	firewalls and other middleboxes will cause EDNS failures
-	which leads to non-extended DNS retries.  A smaller referral
-	response will always be better than a larger one if the
-	same end result can be achieved either way.  See <xref
-	target="RFC5625"/>, <xref target="SAC035"/>, and Section
-	6.2.6 of <xref target="RFC6891"/> for details.</t>
+        and responders there will still be cases when path MTU
+        limitations or IP fragmentation/reassembly problems in
+        firewalls and other middleboxes will cause EDNS failures
+        which leads to non-extended DNS retries.  A smaller referral
+        response will always be better than a larger one if the
+        same end result can be achieved either way.  See <xref
+        target="RFC5625"/>, <xref target="SAC035"/>, and Section
+        6.2.6 of <xref target="RFC6891"/> for details.</t>
+
+      <!-- jabley
+        -- Need to check those section numbers, which were originally
+        -- references to RFC2671bis, subsequently published as RFC6891
+        -->
     </section>
 
     <section title="Delegation Details">
       <section title="Relevant Protocol Elements">
-	<t>A positive delegation response will include the following
-	  elements:</t>
+        <t>A positive delegation response will include the following
+          elements:</t>
 
         <texttable>
           <ttcol>Section</ttcol>
@@ -179,171 +202,188 @@
           <c>A and AAAA RRSets (name server addresses)</c>
         </texttable>
 
-	<t>Note: CNAME defines a canonical name <xref target="RFC1034"/>
-	  while DNAME maps an entire subtree to another domain <xref
-	  target="RFC2672"/>.</t>
+      <!-- jabley
+        -- I marked this up as a texttable, but that seems a little
+        -- bit unnecessary. Could easily change it to a list with
+        -- hanging enumerators.
+        -->
 
-	<t>If the total size of the UDP response exceeds 512 octets
-	  or the size advertised in EDNS, and if the data that does
-	  not fit was "required", then the TC bit will be set
-	  (indicating truncation).  This will usually cause the
-	  requester to retry using TCP, depending on what information
-	  was desired and what information was omitted.  For example,
-	  truncation in the authority section is of no interest to
-	  a stub resolver who only plans to consume the answer
-	  section.  If a retry using TCP is needed, the total cost
-	  of the transaction is much higher.  See Section 6.1.3.2
-	  of <xref target="RFC1123"/> for details on the requirement
-	  that UDP be attempted before falling back to TCP.</t>
+        <t>Note: CNAME defines a canonical name <xref target="RFC1034"/>
+          while DNAME maps an entire subtree to another domain <xref
+          target="RFC2672"/>.</t>
 
-	<t>RRSets (Resource Record Sets, see <xref target="RFC2136"/>)
-	  are never sent partially unless the TC bit is set to
-	  indicate truncation.  When the TC bit is set, the final
-	  apparent RRset in the final non-empty section must be
-	  considered "possibly damaged" (see Section 6.2 of <xref
-	  target="RFC1035"/> and Section 9 of <xref
-	  target="RFC2181"/>).</t>
+        <t>If the total size of the UDP response exceeds 512 octets
+          or the size advertised in EDNS, and if the data that does
+          not fit was "required", then the TC bit will be set
+          (indicating truncation).  This will usually cause the
+          requester to retry using TCP, depending on what information
+          was desired and what information was omitted.  For example,
+          truncation in the authority section is of no interest to
+          a stub resolver who only plans to consume the answer
+          section.  If a retry using TCP is needed, the total cost
+          of the transaction is much higher.  See Section 6.1.3.2
+          of <xref target="RFC1123"/> for details on the requirement
+          that UDP be attempted before falling back to TCP.</t>
 
-	<t>With or without truncation, the glue present in the
-	  additional data section should be considered "possibly
-	  incomplete", and requesters should be prepared to re-query
-	  for any damaged or missing RRsets.  Note that truncation
-	  of the additional data section might not be signaled via
-	  the TC bit since additional data is often optional (see
-	  discussion in Appendix B of <xref target="RFC4472"/>).</t>
+        <t>RRSets (Resource Record Sets, see <xref target="RFC2136"/>)
+          are never sent partially unless the TC bit is set to
+          indicate truncation.  When the TC bit is set, the final
+          apparent RRset in the final non-empty section must be
+          considered "possibly damaged" (see Section 6.2 of <xref
+          target="RFC1035"/> and Section 9 of <xref
+          target="RFC2181"/>).</t>
 
-	<t>DNS label compression allows the component labels of a
-	  domain name to be instantiated exactly once per DNS
-	  message, and then referenced with a two-octet "pointer"
-	  from other locations in that same DNS message (see Section
-	  4.1.4 of <xref target="RFC1035"/>).  If all nameserver
-	  names in a message share a common parent (for example,
-	  all of them are in "ROOT-SERVERS.NET" zone), then more
-	  space will be available for incompressible data (such as
-	  nameserver addresses).</t>
+        <t>With or without truncation, the glue present in the
+          additional data section should be considered "possibly
+          incomplete", and requesters should be prepared to re-query
+          for any damaged or missing RRsets.  Note that truncation
+          of the additional data section might not be signaled via
+          the TC bit since additional data is often optional (see
+          discussion in Appendix B of <xref target="RFC4472"/>).</t>
 
-	<t>The query name can be as long as 255 octets of network
-	  data.  In this worst case scenario, the question section
-	  will be 259 octets in size, which would leave only 240
-	  octets for the authority and additional sections (after
-	  deducting 12 octets for the fixed length header) in a
-	  referral.</t>
+        <t>DNS label compression allows the component labels of a
+          domain name to be instantiated exactly once per DNS
+          message, and then referenced with a two-octet "pointer"
+          from other locations in that same DNS message (see Section
+          4.1.4 of <xref target="RFC1035"/>).  If all name server
+          names in a message share a common parent (for example,
+          all of them are in "ROOT-SERVERS.NET" zone), then more
+          space will be available for incompressible data (such as
+          name server addresses).</t>
+
+        <t>The query name can be as long as 255 octets of network
+          data.  In this worst case scenario, the question section
+          will be 259 octets in size, which would leave only 240
+          octets for the authority and additional sections (after
+          deducting 12 octets for the fixed length header) in a
+          referral.</t>
       </section>
 
       <section title="Advice to Zone Owners">
-	<t>Average and maximum question section sizes can be predicted
-	  by the zone owner, since they will know what names actually
-	  exist and can measure which ones are queried for most
-	  often.  Note that if the zone contains any wildcards, it
-	  is possible for maximum length queries to require positive
-	  responses, but that it is reasonable to expect truncation
-	  and TCP retry in that case.  For cost and performance
-	  reasons, the majority of requests should be satisfied
-	  without truncation or TCP retry.</t>
 
-	<t>Some queries to non-existing names can be large, but
-	  this is not a problem because negative responses need not
-	  contain any answer, authority or additional records.  See
-	  Section 2.1 of <xref target="RFC2308"/> for more information
-	  about the format of negative responses.</t>
+      <!-- jabley
+        -- We use "zone operators" in the abstract, but "zone owners"
+        -- here. Perhaps "zone administrators" or "zone managers" is
+        -- a good alternative?
+        -->
 
-	<t>The minimum useful number of name servers is two, for
-	  redundancy (see Section 4.1 of <xref target="RFC1034"/>).
-	  A zone's name servers should be reachable by all IP
-	  protocols versions (e.g., IPv4 and IPv6) in common use.
-	  As long as the servers are well managed, the server serving
-	  IPv6 might be different from the server serving IPv4
-	  sharing the same server name.</t>
+        <t>Average and maximum question section sizes can be predicted
+          by the zone owner, since they will know what names actually
+          exist and can measure which ones are queried for most
+          often.  Note that if the zone contains any wildcards, it
+          is possible for maximum length queries to require positive
+          responses, but that it is reasonable to expect truncation
+          and TCP retry in that case.  For cost and performance
+          reasons, the majority of requests should be satisfied
+          without truncation or TCP retry.</t>
 
-	<t>The best case is no truncation at all.  This is because
-	  many requesters will retry using TCP immediately, or will
-	  automatically requery for RRsets that are possibly
-	  truncated, without considering whether the omitted data
-	  was actually necessary.</t>
+        <t>Some queries to non-existing names can be large, but
+          this is not a problem because negative responses need not
+          contain any answer, authority or additional records.  See
+          Section 2.1 of <xref target="RFC2308"/> for more information
+          about the format of negative responses.</t>
 
-	<t>Anycast <xref target="RFC3258"/> is a useful tool for
-	  performance and reliability without increasing the size
-	  of referral responses.</t>
+        <t>The minimum useful number of name servers is two, for
+          redundancy (see Section 4.1 of <xref target="RFC1034"/>).
+          A zone's name servers should be reachable by all IP
+          protocols versions (e.g., IPv4 and IPv6) in common use.
+          As long as the servers are well managed, the server serving
+          IPv6 might be different from the server serving IPv4
+          sharing the same server name.</t>
 
-	<t>While it is irrelevant to the response size issue, all
-	  zones have to be served via IPv4 as well to avoid name
-	  space fragmentation <xref target="RFC3901"/>.</t>
+        <t>The best case is no truncation at all.  This is because
+          many requesters will retry using TCP immediately, or will
+          automatically requery for RRsets that are possibly
+          truncated, without considering whether the omitted data
+          was actually necessary.</t>
+
+        <t>Anycast <xref target="RFC3258"/> is a useful tool for
+          performance and reliability without increasing the size
+          of referral responses.</t>
+
+      <!-- jabley
+        -- I suggest RFC4786 as a better reference than 3258.
+        -->
+
+        <t>While it is irrelevant to the response size issue, all
+          zones have to be served via IPv4 as well to avoid name
+          space fragmentation <xref target="RFC3901"/>.</t>
       </section>
 
       <section title="Advice to Server Implementors">
-	<t>Each NS RR for a zone will add 12 fixed octets (name,
-	  type, class, ttl, and rdlen) plus 2 to 255 variable octets
-	  (for the NSDNAME).  Each A RR will require 16 octets, and
-	  each AAAA RR will require 28 octets.</t>
+        <t>Each NS RR for a zone will add 12 fixed octets (name,
+          type, class, ttl, and rdlen) plus 2 to 255 variable octets
+          (for the NSDNAME).  Each A RR will require 16 octets, and
+          each AAAA RR will require 28 octets.</t>
 
-	<t>While DNS distinguishes between necessary and optional
-	  resource records, this distinction is according to protocol
-	  elements necessary to signify facts, and takes no official
-	  notice of protocol content necessary to ensure correct
-	  operation.  For example, a nameserver name that is in or
-	  below the zone cut being described by a delegation is
-	  "necessary content", since there is no way to reach that
-	  zone unless the parent zone's delegation includes "glue
-	  records" describing that name server's addresses.</t>
+        <t>While DNS distinguishes between necessary and optional
+          resource records, this distinction is according to protocol
+          elements necessary to signify facts, and takes no official
+          notice of protocol content necessary to ensure correct
+          operation.  For example, a name server name that is in or
+          below the zone cut being described by a delegation is
+          "necessary content", since there is no way to reach that
+          zone unless the parent zone's delegation includes "glue
+          records" describing that name server's addresses.</t>
 
-	<t>Recall that the TC bit is only set when a required RRset
-	  can not be included in its entirety (see Section 9 of
-	  <xref target="RFC2181"/>).  Even when some of the RRsets
-	  to be included in the additional section don't fit in the
-	  response size, the TC bit isn't set.  These RRsets may
-	  be important for a referral.  Some DNS implementations
-	  try to resolve these missing glue records separately which
-	  will introduce extra queries and extra time to resolve a
-	  given name.</t>
+        <t>Recall that the TC bit is only set when a required RRset
+          can not be included in its entirety (see Section 9 of
+          <xref target="RFC2181"/>).  Even when some of the RRsets
+          to be included in the additional section don't fit in the
+          response size, the TC bit isn't set.  These RRsets may
+          be important for a referral.  Some DNS implementations
+          try to resolve these missing glue records separately which
+          will introduce extra queries and extra time to resolve a
+          given name.</t>
 
-	<t>A delegation response should prioritize glue records as
-	  follows.
+        <t>A delegation response should prioritize glue records as
+          follows.
 
           <list style="hanging">
-	    <t hangText="first:">All glue RRsets for one name server
-	      whose name is in or below the zone being delegated,
-	      or which has multiple address RRsets (currently A and
-	      AAAA), or preferably both;</t>
+            <t hangText="first:">All glue RRsets for one name server
+              whose name is in or below the zone being delegated,
+              or which has multiple address RRsets (currently A and
+              AAAA), or preferably both;</t>
 
-	    <t hangText="second:">Alternate between adding all glue
-	      RRsets for any name servers whose names are in or
-	      below the zone being delegated, and all glue RRsets
-	      for any name servers who have multiple address RRsets
-	      (currently A and AAAA);</t>
+            <t hangText="second:">Alternate between adding all glue
+              RRsets for any name servers whose names are in or
+              below the zone being delegated, and all glue RRsets
+              for any name servers who have multiple address RRsets
+              (currently A and AAAA);</t>
 
-	    <t hangText="thence:">All other glue RRsets, in any
-	      order.</t>
+            <t hangText="thence:">All other glue RRsets, in any
+              order.</t>
           </list>
 
-	  Whenever there are multiple candidates for a position in
-	  this priority scheme, one should be chosen on a round-robin
-	  or fully random basis.  The goal of this priority scheme
-	  is to offer "necessary" glue first to fill into the
-	  response if possible.</t>
+          Whenever there are multiple candidates for a position in
+          this priority scheme, one should be chosen on a round-robin
+          or fully random basis.  The goal of this priority scheme
+          is to offer "necessary" glue first to fill into the
+          response if possible.</t>
 
-	<t>If any "necessary" content cannot be fit in the response,
-	  then it is advisable that the TC bit be set in order to
-	  force a TCP retry, rather than have the zone be unreachable.
-	  Note that a parent server's proper response to a query
-	  for in-child glue or below-child glue is a referral rather
-	  than an answer, and that this referral must be able to
-	  contain the in-child or below-child glue, and that in
-	  outlying cases, only EDNS or TCP will be large enough to
-	  contain that data.</t>
+        <t>If any "necessary" content cannot be fit in the response,
+          then it is advisable that the TC bit be set in order to
+          force a TCP retry, rather than have the zone be unreachable.
+          Note that a parent server's proper response to a query
+          for in-child glue or below-child glue is a referral rather
+          than an answer, and that this referral must be able to
+          contain the in-child or below-child glue, and that in
+          outlying cases, only EDNS or TCP will be large enough to
+          contain that data.</t>
 
-	<t>The glue record order should be independent of the version
-	  of IP used in the query because the DNS server might just
-	  see a query from an intermediate server rather than the
-	  query from the original client.</t>
+        <t>The glue record order should be independent of the version
+          of IP used in the query because the DNS server might just
+          see a query from an intermediate server rather than the
+          query from the original client.</t>
       </section>
     </section>
 
     <section title="Analysis">
       <t>An instrumented protocol trace of a best case delegation
-	response is shown in <xref target="protocol_trace"/>.  Note
-	that 13 servers are named, and 13 addresses are given.  This
-	query was artificially designed to exactly reach the 512
-	octets limit.</t>
+        response is shown in <xref target="protocol_trace"/>.  Note
+        that 13 servers are named, and 13 addresses are given.  This
+        query was artificially designed to exactly reach the 512
+        octets limit.</t>
 
       <figure anchor="protocol_trace">
         <artwork><![CDATA[
@@ -389,15 +429,15 @@ M.GTLD-SERVERS.NET.  172800 A   192.55.83.30         ;; @512
       </figure>
 
       <t>For longer query names, the number of address records
-	supplied will be lower.  Furthermore, it is only by using
-	a common parent name (which is "GTLD-SERVERS.NET." in this
-	example) that all 13 addresses are able to fit, due to the
-	use of DNS compression pointers in the last 12 occurrences
-	of the parent domain name.  The outputs from the response
-	simulator in <xref target="response_simulator"/> (written
-	in <xref target="PERL">perl</xref>) shown in <xref
-	target="respsize_1"/> and <xref target="respsize_2"/>
-	demonstrate these properties.</t>
+        supplied will be lower.  Furthermore, it is only by using
+        a common parent name (which is "GTLD-SERVERS.NET." in this
+        example) that all 13 addresses are able to fit, due to the
+        use of DNS compression pointers in the last 12 occurrences
+        of the parent domain name.  The outputs from the response
+        simulator in <xref target="response_simulator"/> (written
+        in <xref target="PERL">perl</xref>) shown in <xref
+        target="respsize_1"/> and <xref target="respsize_2"/>
+        demonstrate these properties.</t>
 
       <figure anchor="respsize_1">
         <artwork><![CDATA[
@@ -440,71 +480,71 @@ For average size query (64 byte):
       </figure>
 
       <t>Here we use the term "green" if all address records could
-	fit, or "yellow" if two or more could fit, or "orange" if
-	only one could fit, or "red" if no address record could
-	fit.  It's clear that without a common parent for nameserver
-	names, much space would be lost.  For these examples we use
-	an average/common name size of 15 octets, befitting our
-	assumption of "GTLD-SERVERS.NET." as our common parent
-	name.</t>
+        fit, or "yellow" if two or more could fit, or "orange" if
+        only one could fit, or "red" if no address record could
+        fit.  It's clear that without a common parent for name server
+        names, much space would be lost.  For these examples we use
+        an average/common name size of 15 octets, befitting our
+        assumption of "GTLD-SERVERS.NET." as our common parent
+        name.</t>
 
       <t>We're assuming a medium query name size of 64 since that
-	is the typical size seen in trace data at the time of this
-	writing.  If Internationalized Domain Name (IDN) or any
-	other technology that results in larger query names be
-	deployed significantly in advance of EDNS, then new
-	measurements and new estimates will have to be made.</t>
+        is the typical size seen in trace data at the time of this
+        writing.  If Internationalized Domain Name (IDN) or any
+        other technology that results in larger query names be
+        deployed significantly in advance of EDNS, then new
+        measurements and new estimates will have to be made.</t>
     </section>
 
     <section title="Conclusions">
-      <t>The current practice of giving all nameserver names a
-	common parent (such as "GTLD-SERVERS.NET." or "ROOT-SERVERS.NET.")
-	saves space in DNS responses and allows for more nameservers
-	to be enumerated than would otherwise be possible, since
-	the common parent domain name only appears once in a DNS
-	message and is referred to via "compression pointers"
-	thereafter.</t>
+      <t>The current practice of giving all name server names a
+        common parent (such as "GTLD-SERVERS.NET." or "ROOT-SERVERS.NET.")
+        saves space in DNS responses and allows for more name servers
+        to be enumerated than would otherwise be possible, since
+        the common parent domain name only appears once in a DNS
+        message and is referred to via "compression pointers"
+        thereafter.</t>
 
-      <t>If all nameserver names for a zone share a common parent,
-	then it is operationally advisable to make all servers for
-	the zone thus served also be authoritative for the zone of
-	that common parent.  For example, the root name servers
-	(?.ROOT-SERVERS.NET.) can answer authoritatively for the
-	ROOT-SERVERS.NET. zone.  This is to ensure that the zone's
-	servers always have the zone's nameservers' glue available
-	when delegating, and will be able to respond with answers
-	rather than referrals if a requester who wants that glue
-	comes back asking for it.  In this case the name server
-	will likely be a "stealth server" -- authoritative but
-	unadvertised in the glue zone's NS RRset.  See Section 2
-	of <xref target="RFC1996"/> for more information about
-	stealth servers.</t>
+      <t>If all name server names for a zone share a common parent,
+        then it is operationally advisable to make all servers for
+        the zone thus served also be authoritative for the zone of
+        that common parent.  For example, the root name servers
+        (?.ROOT-SERVERS.NET.) can answer authoritatively for the
+        ROOT-SERVERS.NET. zone.  This is to ensure that the zone's
+        servers always have the zone's name servers' glue available
+        when delegating, and will be able to respond with answers
+        rather than referrals if a requester who wants that glue
+        comes back asking for it.  In this case the name server
+        will likely be a "stealth server" -- authoritative but
+        unadvertised in the glue zone's NS RRset.  See Section 2
+        of <xref target="RFC1996"/> for more information about
+        stealth servers.</t>
 
-      <t>Thirteen (13) is the effective maximum number of nameserver
-	names usable with traditional (non-extended) DNS, assuming
-	a common parent domain name, and given that implicit referral
-	response truncation is undesirable in the average case.</t>
+      <t>Thirteen (13) is the effective maximum number of name server
+        names usable with traditional (non-extended) DNS, assuming
+        a common parent domain name, and given that implicit referral
+        response truncation is undesirable in the average case.</t>
 
       <t>More than one address record in a protocol family per
-	server is inadvisable since the necessary glue RRsets (A
-	or AAAA) are atomically indivisible, and will be larger
-	than a single resource record.  Larger RRsets are more
-	likely to lead to or encounter truncation.</t>
+        server is inadvisable since the necessary glue RRsets (A
+        or AAAA) are atomically indivisible, and will be larger
+        than a single resource record.  Larger RRsets are more
+        likely to lead to or encounter truncation.</t>
 
       <t>More than one address record across protocol families is
-	less likely to lead to or encounter truncation, partly
-	because multiprotocol clients, which are required to handle
-	larger RRsets such as AAAA RRs, are more likely to speak
-	EDNS, which can use a larger UDP response size limit, and
-	partly because the resource records (A and AAAA) are in
-	different RRsets and are therefore divisible from each
-	other.</t>
+        less likely to lead to or encounter truncation, partly
+        because multiprotocol clients, which are required to handle
+        larger RRsets such as AAAA RRs, are more likely to speak
+        EDNS, which can use a larger UDP response size limit, and
+        partly because the resource records (A and AAAA) are in
+        different RRsets and are therefore divisible from each
+        other.</t>
 
       <t>Name server names that are at or below the zone they serve
-	are more sensitive to referral response truncation, and
-	glue records for them should be considered "more important"
-	than other glue records, in the assembly of referral
-	responses.</t>
+        are more sensitive to referral response truncation, and
+        glue records for them should be considered "more important"
+        than other glue records, in the assembly of referral
+        responses.</t>
     </section>
 
     <section title="Security Considerations">
@@ -519,9 +559,9 @@ For average size query (64 byte):
 
     <section title="Acknowledgements">
       <t>The authors thank Peter Koch, Rob Austein, Joe Abley, Mark
-	Andrews, Kenji Rikitake, Stephane Bortzmeyer, Olafur
-	Gudmundsson, Alfred Hoenes, Alexander Mayrhofer, and Ray
-	Bellis for their valuable comments and suggestions.</t>
+        Andrews, Kenji Rikitake, Stephane Bortzmeyer, Olafur
+        Gudmundsson, Alfred Hoenes, Alexander Mayrhofer, and Ray
+        Bellis for their valuable comments and suggestions.</t>
 
       <t>This work was supported by the US National Science Foundation
         (research grant SCI-0427144) and DNS-OARC.</t>
@@ -685,8 +725,8 @@ sub atmost {
           <list style="hanging">
             <t hangText="15">Draft resurrected; Joe added as co-author;
               changed Paul's affiliation.</t>
-	  </list>
-	</t>
+          </list>
+        </t>
       </section>
     </section>
   </back>
