@@ -51,7 +51,7 @@
 ]>
 
 <rfc category="info" ipr="trust200902"
-  docName="draft-ietf-dnsop-respsize-15">
+  docName="draft-ietf-dnsop-respsize-16">
 
   <?rfc toc="yes" ?>
   <?rfc symrefs="yes" ?>
@@ -108,10 +108,10 @@
       </address>
     </author>
 
-    <date day="13" month="February" year="2014"/>
+    <date day="27" month="July" year="2014"/>
 
     <abstract>
-      <t>With a mandated default minimum maximum UDP message size
+      <t>With a mandated default maximum UDP message size
 	of 512 octets, the DNS protocol presents some special
 	problems for zones wishing to expose a moderate or high
 	number of authority servers (NS resource records).  This
@@ -143,8 +143,8 @@
 	  <t hangText="DNSSEC:">DNS Security Extensions <xref
 	    target="RFC4033"/></t>
 
-          <t hangText="DO:">"DNS OK" -- a flag in the EDNS header used
-	    to signal the ability to use DNSSEC <xref target="RFC4035"/></t>
+          <t hangText="DO:">"DNSSEC OK" -- a flag in the EDNS header used
+	    to signal the ability to use DNSSEC <xref target="RFC3225"/></t>
 
 	  <t hangText="EDNS:">Extension mechanisms for DNS <xref
 	    target="RFC6891"/></t>
@@ -163,7 +163,7 @@
 	  <t hangText="RR:">Resource Record <xref target="RFC1034"/></t>
 
 	  <t hangText="RRSet:">Resource Record Set <xref
-	    target="RFC1034"/></t>
+	    target="RFC2181"/></t>
 
           <t hangText="TC:">A bit in the DNS message header used to
 	    indicate that the message has been truncated <xref
@@ -189,8 +189,9 @@
       <t>The EDNS protocol extension starting with version 0 permits
 	larger responses by mutual agreement of the initiator and
 	responder (see Section 4.3 and Section 6.2 of <xref
-	target="RFC6891"/>), and it is recommended to support EDNS.
-	The 512 octets UDP message size limit will remain in practical
+	target="RFC6891"/>). For practical reasons DNS servers and
+	resolvers are recommended to support EDNS.
+	But the 512 octets UDP message size limit will remain in practical
 	effect until substantially all DNS servers and resolvers
 	support EDNS.</t>
 
@@ -205,8 +206,8 @@
 
       <t>While more than fourteen years passed since the publication
 	of the original EDNS0 document <xref target="RFC2671"/>,
-	measurements conducted at the M Root Server in May 2012
-	suggested that only around 65% of initiators support it.  This
+	measurements conducted at the M Root Server in July 2014
+	suggested that only around 74.7% of queries supported it.  This
 	fraction was consistent with similar measurements conducted
 	in 2010 and 2011. The long tail of EDNS deployment may
 	eventually be measured in decades.</t>
@@ -219,13 +220,14 @@
 	DNSSEC is signalled using the DO flag in the EDNS0 header.</t>
 
       <t>Even in scenarios where EDNS support in initiators and
-	responders can be assumed, e.g. in the case of messages
+	responders can be assumed (e.g. in the case of messages
 	exchanged using DNSSEC, or at some future time where EDNS
-	deployment can be considered ubiquitous, there will still
+	deployment can be considered ubiquitous) there will still
 	be cases when MTU limitations or IP fragmentation/reassembly
 	problems in firewalls and other middleboxes will cause EDNS
-	failures which lead to non-extended DNS retries.  A smaller
-	referral response will always be better than a larger one
+	failures; such cases will lead to non-extended DNS retries. 
+	A smaller
+	referral response will alwaicys be better than a larger one
 	if the same end result can be achieved either way.  See
 	<xref target="RFC5625"/>, <xref target="SAC035"/>, and
 	Section 6.2.6 of <xref target="RFC6891"/> for further
@@ -270,7 +272,7 @@
           of <xref target="RFC1123"/> for details on the requirement
           that UDP be attempted before falling back to TCP.</t>
 
-	<t>RRSets are are never sent partially unless the TC bit
+	<t>RRSets are never sent partially unless the TC bit
 	  is set to indicate truncation.  When the TC bit is set,
 	  the final apparent RRSet in the final non-empty section
 	  must be considered "possibly damaged" (see Section 6.2
@@ -339,9 +341,8 @@
           was actually necessary.</t>
 
         <t>Anycast <xref target="RFC3258"/> <xref target="RFC4786"/>
-	  is a useful technique for improving performance and
-          below the zone cut being described by a delegation is
-	  responses.</t>
+	  is a useful technique for improving performance and reliability
+	  without increasing the size of responses.</t>
 
         <t>While it is irrelevant to the response size issue, all
 	  zones have to be served via IPv4 as well as IPv6 to avoid
@@ -526,9 +527,10 @@ For average size query (64 byte):
         assumption of "GTLD-SERVERS.NET." as our common parent
         name.</t>
 
-      <t>We assume a medium query name size of 64 since that
+      <t>We assume a medium query name size of 64 octets since that
         is the typical size seen in trace data at the time of this
-        writing.  If Internationalized Domain Name (IDN) or any
+        writing (Average query name size was 32.9 octets in M-Root
+        measured in July 2014).  If Internationalized Domain Name (IDN) or any
         other technology that results in larger query names be
         deployed significantly in advance of EDNS, then new
         measurements and new estimates will have to be made.</t>
@@ -597,8 +599,9 @@ For average size query (64 byte):
     <section title="Acknowledgements">
       <t>The authors thank Peter Koch, Rob Austein, Mark Andrews,
 	Kenji Rikitake, Stephane Bortzmeyer, Olafur Gudmundsson,
-	Alfred Hoenes, Alexander Mayrhofer, and Ray Bellis for their
-	valuable comments and suggestions.</t>
+	Alfred Hoenes, Alexander Mayrhofer, Ray Bellis, David Conrad,
+	and Andrew Sullivan
+	for their valuable comments and suggestions.</t>
 
       <t>This work was supported by the US National Science Foundation
         (research grant SCI-0427144) and DNS-OARC.</t>
