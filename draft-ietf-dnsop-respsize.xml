@@ -34,8 +34,6 @@
     'http://xml.resource.org/public/rfc/bibxml/reference.RFC.3901.xml'>
   <!ENTITY rfc4033 PUBLIC ''
     'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4033.xml'>
-  <!ENTITY rfc4035 PUBLIC ''
-    'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4035.xml'>
   <!ENTITY rfc4472 PUBLIC ''
     'http://xml.resource.org/public/rfc/bibxml/reference.RFC.4472.xml'>
   <!ENTITY rfc4786 PUBLIC ''
@@ -623,12 +621,12 @@ For average size query (64 byte):
       &rfc2460;
       &rfc2671;
       &rfc2672;
+      &rfc3225;
       &rfc3226;
       &rfc3258;
       &rfc3596;
       &rfc3901;
       &rfc4033;
-      &rfc4035;
       &rfc4472;
       &rfc4786;
       &rfc5625;
